@@ -1,3 +1,5 @@
+const path = require("path");
+
 module.exports = {
   css: {
     loaderOptions: {
@@ -30,8 +32,17 @@ module.exports = {
           use: {
             loader: "babel-loader",
             options: {
-              presets: ["@babel/preset-env"],
-
+              presets: [
+                [
+                  "@babel/preset-env",
+                  {
+                    targets: "> 0.25%, not dead", // Make sure this matches your target browser environment
+                    useBuiltIns: "entry", // If you need polyfills
+                    corejs: 3, // Ensure core-js is available
+                    modules: false, // This prevents Babel from transforming ES modules (important for tree-shaking)
+                  },
+                ],
+              ],
               plugins: ["@babel/plugin-proposal-optional-chaining"],
             },
           },
@@ -47,5 +58,20 @@ module.exports = {
       ],
     },
   },
+  devServer: {
+    before(app) {
+      // Add a middleware to set the correct MIME type for `.mjs` files
+      app.use((req, res, next) => {
+        if (req.url.endsWith(".mjs")) {
+          res.setHeader("Content-Type", "application/javascript");
+        }
+        next();
+      });
+    },
+    contentBase: [
+      path.join(__dirname, "public"),
+      path.join(__dirname, "path/to/onnxruntime-web/files"), // Adjust this path as needed
+    ],
+    host: "0.0.0.0",
+  },
 };
-
