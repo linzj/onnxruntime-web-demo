@@ -1,35 +1,17 @@
 <template>
   <div>
-    <model-status
-      v-if="modelLoading || modelInitializing"
-      :modelLoading="modelLoading"
-      :modelInitializing="modelInitializing"
-    ></model-status>
+    <model-status v-if="modelLoading || modelInitializing" :modelLoading="modelLoading"
+      :modelInitializing="modelInitializing"></model-status>
     <v-container fluid>
       <!-- Utility bar to select session backend configs. -->
-      <v-layout
-        justify-center
-        align-center
-        style="margin: auto; width: 40%; padding: 40px"
-      >
+      <v-layout justify-center align-center style="margin: auto; width: 40%; padding: 40px">
         <div class="select-backend">Select Backend:</div>
-        <v-select
-          v-model="sessionBackend"
-          :disabled="modelLoading || modelInitializing || sessionRunning"
-          :items="backendSelectList"
-          label="Switch Backend"
-          :menu-props="{ maxHeight: '750' }"
-          solo
-          single-line
-          hide-details
-        ></v-select>
+        <v-select v-model="sessionBackend" :disabled="modelLoading || modelInitializing || sessionRunning"
+          :items="backendSelectList" label="Switch Backend" :menu-props="{ maxHeight: '750' }" solo single-line
+          hide-details></v-select>
       </v-layout>
       <v-layout>
-        <v-flex
-          v-if="modelLoadingError"
-          style="padding-bottom: 30px"
-          class="error-message"
-        >
+        <v-flex v-if="modelLoadingError" style="padding-bottom: 30px" class="error-message">
           Error: Current backend is not supported on your machine. Try Selecting
           a different backend.
         </v-flex>
@@ -38,80 +20,38 @@
       <v-layout row wrap justify-space-around class="webcam-panel elevation-1">
         <div class="webcam-container" id="webcam-container" display="none">
           <video playsinline muted id="webcam" width="416" height="416"></video>
-          <canvas
-            id="input-canvas"
-            width="416"
-            height="416"
-            style="position: absolute"
-            v-show="!webcamEnabled"
-          ></canvas>
+          <canvas id="input-canvas" width="416" height="416" style="position: absolute"
+            v-show="!webcamEnabled"></canvas>
         </div>
-        <v-progress-circular
-          v-show="sessionRunning"
-          indeterminate
-          color="primary"
-          height="250px"
-        />
+        <v-progress-circular v-show="sessionRunning" indeterminate color="primary" height="250px" />
 
-        <v-flex
-          justify-center
-          align-center
-          sm6
-          class="text-xs-center"
-          style="display: flex; flex-direction: column"
-        >
-          <div
-            class="text-xs-center"
-            style="display: flex; justify-content: center"
-          >
+        <v-flex justify-center align-center sm6 class="text-xs-center" style="display: flex; flex-direction: column">
+          <div class="text-xs-center" style="display: flex; justify-content: center">
             <div v-if="imageLoadingError" class="error-message">
               Error loading URL
             </div>
             <div style="width: 70%">
-              <v-select
-                v-model="imageURLSelect"
-                :items="imageUrls"
-                :disabled="
-                  modelLoading ||
-                  modelInitializing ||
-                  modelLoadingError ||
-                  webcamEnabled
-                "
-                label="Select image"
-                :menu-props="{ maxHeight: '750' }"
-                solo
-                single-line
-                hide-details
-              ></v-select>
+              <v-select v-model="imageURLSelect" :items="imageUrls" :disabled="modelLoading ||
+                modelInitializing ||
+                modelLoadingError ||
+                webcamEnabled
+  " label="Select image" :menu-props="{ maxHeight: '750' }" solo single-line hide-details></v-select>
             </div>
           </div>
           <v-card-text>or</v-card-text>
-          <div
-            :disabled="
-              modelLoading ||
-              modelInitializing ||
-              modelLoadingError ||
-              webcamEnabled
-            "
-            style="margin: 0; width: 30%"
-          >
+          <div :disabled="modelLoading ||
+            modelInitializing ||
+            modelLoadingError ||
+            webcamEnabled
+  " style="margin: 0; width: 30%">
             <label class="inputs">
               UPLOAD IMAGE
-              <input
-                style="display: none"
-                type="file"
-                id="input-upload-image"
-                @change="handleFileChange"
-              />
+              <input style="display: none" type="file" id="input-upload-image" @change="handleFileChange" />
             </label>
           </div>
           <v-card-text>or</v-card-text>
 
-          <v-btn
-            style="margin: 0; width: 30%"
-            v-on:click="webcamController"
-            :disabled="modelLoadingError"
-          >
+          <v-btn style="margin: 0; width: 30%" v-on:click="webcamController" :disabled="modelLoadingError">
             {{ webcamStatus }}
           </v-btn>
         </v-flex>
@@ -167,6 +107,7 @@ export default class WebcamModelUI extends Vue {
   inferenceTime: number;
   session: InferenceSession;
   gpuSession: InferenceSession | undefined;
+  webGPUSession: InferenceSession | undefined;
   cpuSession: InferenceSession | undefined;
 
   modelLoading: boolean;
@@ -209,6 +150,7 @@ export default class WebcamModelUI extends Vue {
     this.modelFile = new ArrayBuffer(0);
     this.backendSelectList = [
       { text: "GPU-WebGL", value: "webgl" },
+      { text: "GPU-WebGPU", value: "webgpu" },
       { text: "CPU-WebAssembly", value: "wasm" },
     ];
   }
@@ -242,6 +184,14 @@ export default class WebcamModelUI extends Vue {
       this.modelLoading = true;
       this.modelInitializing = true;
     }
+    if (this.sessionBackend === "webgpu") {
+      if (this.webGPUSession) {
+        this.session = this.webGPUSession;
+        return;
+      }
+      this.modelLoading = true;
+      this.modelInitializing = true;
+    }
     if (this.sessionBackend === "wasm") {
       if (this.cpuSession) {
         this.session = this.cpuSession;
@@ -255,6 +205,9 @@ export default class WebcamModelUI extends Vue {
       if (this.sessionBackend === "webgl") {
         this.gpuSession = await runModelUtils.createModelGpu(this.modelFile);
         this.session = this.gpuSession;
+      } else if (this.sessionBackend === "webgpu") {
+        this.webGPUSession = await runModelUtils.createModelWebGpu(this.modelFile);
+        this.session = this.webGPUSession;
       } else if (this.sessionBackend === "wasm") {
         this.cpuSession = await runModelUtils.createModelCpu(this.modelFile);
         this.session = this.cpuSession;
@@ -262,8 +215,9 @@ export default class WebcamModelUI extends Vue {
     } catch (e) {
       this.modelLoading = false;
       this.modelInitializing = false;
-      if (this.sessionBackend === "webgl") {
+      if (this.sessionBackend === "webgl" || this.sessionBackend === "webgpu") {
         this.gpuSession = undefined;
+        this.webGPUSession = undefined;
       } else {
         this.cpuSession = undefined;
       }
@@ -272,7 +226,7 @@ export default class WebcamModelUI extends Vue {
     this.modelLoading = false;
     // warm up session with a sample tensor. Use setTimeout(..., 0) to make it an async execution so
     // that UI update can be done.
-    if (this.sessionBackend === "webgl") {
+    if (this.sessionBackend === "webgl" || this.sessionBackend === "webgpu") {
       setTimeout(() => {
         this.warmupModel(this.session!);
         this.modelInitializing = false;
@@ -561,12 +515,14 @@ export default class WebcamModelUI extends Vue {
   font-family: var(--font-sans-serif);
   margin-bottom: 30px;
 }
+
 .webcam-panel {
   padding: 40px 20px;
   margin-top: 30px;
   background-color: white;
   position: relative;
 }
+
 .webcam-container {
   border-radius: 5px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
@@ -578,10 +534,12 @@ export default class WebcamModelUI extends Vue {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+
   & :nth-child(n + 3) {
     position: absolute;
     border: 1px solid red;
     font-size: 24px;
+
     & :first-child {
       background: white;
       color: black;
@@ -593,6 +551,7 @@ export default class WebcamModelUI extends Vue {
     }
   }
 }
+
 .inputs {
   margin: auto;
   background: #f5f5f5;

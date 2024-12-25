@@ -1,36 +1,18 @@
 <template>
   <div>
     <!-- session Loading and Initializing Indicator -->
-    <model-status
-      v-if="modelLoading || modelInitializing"
-      :modelLoading="modelLoading"
-      :modelInitializing="modelInitializing"
-    ></model-status>
+    <model-status v-if="modelLoading || modelInitializing" :modelLoading="modelLoading"
+      :modelInitializing="modelInitializing"></model-status>
     <v-container fluid>
       <!-- Utility bar to select session backend configs. -->
-      <v-layout
-        justify-center
-        align-center
-        style="margin: auto; width: 40%; padding: 30px"
-      >
+      <v-layout justify-center align-center style="margin: auto; width: 40%; padding: 30px">
         <div class="select-backend">Select Backend:</div>
-        <v-select
-          v-model="sessionBackend"
-          :disabled="modelLoading || modelInitializing || sessionRunning"
-          :items="backendSelectList"
-          label="Switch Backend"
-          :menu-props="{ maxHeight: '750' }"
-          solo
-          single-line
-          hide-details
-        ></v-select>
+        <v-select v-model="sessionBackend" :disabled="modelLoading || modelInitializing || sessionRunning"
+          :items="backendSelectList" label="Switch Backend" :menu-props="{ maxHeight: '750' }" solo single-line
+          hide-details></v-select>
       </v-layout>
       <v-layout>
-        <v-flex
-          v-if="modelLoadingError"
-          style="padding-bottom: 30px"
-          class="error-message"
-        >
+        <v-flex v-if="modelLoadingError" style="padding-bottom: 30px" class="error-message">
           Error: Current backend is not supported on your machine. Try Selecting
           a different backend.
         </v-flex>
@@ -45,83 +27,48 @@
         <v-flex sm6 md4 align-center justify-start column fill-height>
           <v-layout align-center>
             <v-flex sm4>
-              <v-select
-                v-model="imageURLSelect"
-                :disabled="
-                  modelLoading || modelInitializing || modelLoadingError
-                "
-                :items="imageURLSelectList"
-                label="Select image"
-                :menu-props="{ maxHeight: '750' }"
-                solo
-                single-line
-                hide-details
-              ></v-select>
+              <v-select v-model="imageURLSelect" :disabled="modelLoading || modelInitializing || modelLoadingError
+                " :items="imageURLSelectList" label="Select image" :menu-props="{ maxHeight: '750' }" solo single-line
+                hide-details></v-select>
             </v-flex>
             <v-flex class="text-xs-center">or</v-flex>
-            <label
-              :disabled="modelLoading || modelInitializing || modelLoadingError"
-              class="inputs"
-            >
+            <label :disabled="modelLoading || modelInitializing || modelLoadingError" class="inputs">
               <div>
                 <span>UPLOAD IMAGE</span>
               </div>
-              <input
-                style="display: none"
-                type="file"
-                id="input-upload-image"
-                @change="handleFileChange"
-              />
+              <input style="display: none" type="file" id="input-upload-image" @change="handleFileChange" />
             </label>
           </v-layout>
           <!-- input image -->
-          <div
-            v-if="imageLoadingError"
-            class="error-message"
-            style="padding-top: 30px"
-          >
+          <div v-if="imageLoadingError" class="error-message" style="padding-top: 30px">
             Error loading URL
           </div>
           <v-flex align-center justify-space-between class="canvas-container">
-            <canvas
-              id="input-canvas"
-              :width="imageSize"
-              :height="imageSize"
-            ></canvas>
+            <canvas id="input-canvas" :width="imageSize" :height="imageSize"></canvas>
           </v-flex>
         </v-flex>
 
         <v-flex sm6 md4 column fill-height class="output-container">
           <v-flex class="inference-time-class">
             <span class="inference-time">Inference Time: </span>
-            <span v-if="inferenceTime > 0" class="inference-time-value"
-              >{{ inferenceTime.toFixed(1) }} ms
+            <span v-if="inferenceTime > 0" class="inference-time-value">{{ inferenceTime.toFixed(1) }} ms
             </span>
             <span v-else>-</span>
           </v-flex>
-          <div
-            v-for="i in [0, 1, 2, 3, 4]"
-            :key="i"
-            class="output-class"
-            :class="{
-              predicted: i === 0 && outputClasses[i].probability.toFixed(2) > 0,
-            }"
-          >
+          <div v-for="i in [0, 1, 2, 3, 4]" :key="i" class="output-class" :class="{
+            predicted: i === 0 && outputClasses[i].probability.toFixed(2) > 0,
+}">
             <div class="output-label">{{ outputClasses[i].name }}</div>
-            <div
-              class="output-bar"
-              :style="{
-                width: `${Math.round(180 * outputClasses[i].probability)}px`,
-                background: `rgba(42, 106, 150, ${outputClasses[
-                  i
-                ].probability.toFixed(2)})`,
-                transition: `${
-                  outputClasses[i].probability != 0
-                    ? 'width 0.2s ease-out'
-                    : 'null'
-                }`,
-              }"
-            ></div>
+            <div class="output-bar" :style="{
+              width: `${Math.round(180 * outputClasses[i].probability)}px`,
+              background: `rgba(42, 106, 150, ${outputClasses[
+                i
+              ].probability.toFixed(2)})`,
+  transition: `${outputClasses[i].probability != 0
+    ? 'width 0.2s ease-out'
+    : 'null'
+    }`,
+}"></div>
             <div class="output-value">
               {{ Math.round(100 * outputClasses[i].probability) }}%
             </div>
@@ -167,6 +114,7 @@ export default class ImageModelUI extends Vue {
   sessionRunning: boolean;
   session: InferenceSession | undefined;
   gpuSession: InferenceSession | undefined;
+  webGpuSession: InferenceSession | undefined;
   cpuSession: InferenceSession | undefined;
 
   inferenceTime: number;
@@ -183,6 +131,7 @@ export default class ImageModelUI extends Vue {
     this.sessionBackend = "webgl";
     this.backendSelectList = [
       { text: "GPU-WebGL", value: "webgl" },
+      { text: "GPU-WebGPU", value: "webgpu" },
       { text: "CPU-WebAssembly", value: "wasm" },
     ];
     this.modelLoading = true;
@@ -221,6 +170,14 @@ export default class ImageModelUI extends Vue {
       this.modelLoading = true;
       this.modelInitializing = true;
     }
+    if (this.sessionBackend === "webgpu") {
+      if (this.webGpuSession) {
+        this.session = this.webGpuSession;
+        return;
+      }
+      this.modelLoading = true;
+      this.modelInitializing = true;
+    }
     if (this.sessionBackend === "wasm") {
       if (this.cpuSession) {
         this.session = this.cpuSession;
@@ -234,6 +191,9 @@ export default class ImageModelUI extends Vue {
       if (this.sessionBackend === "webgl") {
         this.gpuSession = await runModelUtils.createModelGpu(this.modelFile);
         this.session = this.gpuSession;
+      } else if (this.sessionBackend === "webgpu") {
+        this.webGpuSession = await runModelUtils.createModelWebGpu(this.modelFile);
+        this.session = this.webGpuSession;
       } else if (this.sessionBackend === "wasm") {
         this.cpuSession = await runModelUtils.createModelCpu(this.modelFile);
         this.session = this.cpuSession;
@@ -243,6 +203,8 @@ export default class ImageModelUI extends Vue {
       this.modelInitializing = false;
       if (this.sessionBackend === "webgl") {
         this.gpuSession = undefined;
+      } else if (this.sessionBackend === "webgpu") {
+        this.webGpuSession = undefined;
       } else {
         this.cpuSession = undefined;
       }
@@ -251,7 +213,7 @@ export default class ImageModelUI extends Vue {
     this.modelLoading = false;
     // warm up session with a sample tensor. Use setTimeout(..., 0) to make it an async execution so
     // that UI update can be done.
-    if (this.sessionBackend === "webgl") {
+    if (this.sessionBackend === "webgl" || this.sessionBackend === "webgpu") {
       setTimeout(() => {
         runModelUtils.warmupModel(this.session!, [
           1,
@@ -401,6 +363,7 @@ export default class ImageModelUI extends Vue {
 
 <style lang="postcss" scoped>
 @import "../../variables.css";
+
 .image-panel {
   padding: 80px 0px 80px 0px;
   margin: auto;
@@ -408,6 +371,7 @@ export default class ImageModelUI extends Vue {
   position: relative;
   width: 85%;
   height: 100%;
+
   & .loading-indicator {
     position: absolute;
     top: 5px;
@@ -447,6 +411,7 @@ export default class ImageModelUI extends Vue {
 .canvas-container {
   position: relative;
   text-align: center;
+
   & #input-canvas {
     background: #eeeeee;
     margin-top: 40px;
@@ -464,6 +429,7 @@ export default class ImageModelUI extends Vue {
     flex-direction: row;
     align-items: center;
     justify-content: center;
+
     & .inference-time {
       text-align: right;
       width: 200px;

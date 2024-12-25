@@ -8,7 +8,17 @@ export async function createModelCpu(model: ArrayBuffer): Promise<InferenceSessi
   init();
   return await InferenceSession.create(model, {executionProviders: ['wasm']});
 }
-export async function createModelGpu(model: ArrayBuffer): Promise<InferenceSession> {
+export async function createModelGpu(
+  model: ArrayBuffer
+): Promise<InferenceSession> {
+  init();
+  return await InferenceSession.create(model, {
+    executionProviders: ["webgl"],
+  });
+}
+export async function createModelWebGpu(
+  model: ArrayBuffer
+): Promise<InferenceSession> {
   init();
   return await InferenceSession.create(model, {
     executionProviders: ["webgpu"],

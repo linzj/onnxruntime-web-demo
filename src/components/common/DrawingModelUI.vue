@@ -128,6 +128,7 @@ export default class DrawingModelUI extends Vue {
   inferenceTime: number;
   session: InferenceSession;
   gpuSession: InferenceSession | undefined;
+  webGPUSession: InferenceSession | undefined;
   cpuSession: InferenceSession | undefined;
   sessionBackend: string;
   modelFile: ArrayBuffer;
@@ -149,6 +150,7 @@ export default class DrawingModelUI extends Vue {
     this.modelFile = new ArrayBuffer(0);
     this.backendSelectList = [
       { text: "GPU-WebGL", value: "webgl" },
+      { text: "GPU-WebGPU", value: "webgpu" },
       { text: "CPU-WebAssembly", value: "wasm" },
     ];
   }
@@ -175,6 +177,14 @@ export default class DrawingModelUI extends Vue {
       this.modelLoading = true;
       this.modelInitializing = true;
     }
+    if (this.sessionBackend === "webgpu") {
+      if (this.webGPUSession) {
+        this.session = this.webGPUSession;
+        return;
+      }
+      this.modelLoading = true;
+      this.modelInitializing = true;
+    }
     if (this.sessionBackend === "wasm") {
       if (this.cpuSession) {
         this.session = this.cpuSession;
@@ -188,6 +198,9 @@ export default class DrawingModelUI extends Vue {
       if (this.sessionBackend === "webgl") {
         this.gpuSession = await runModelUtils.createModelGpu(this.modelFile);
         this.session = this.gpuSession;
+      } else if (this.sessionBackend === "webgpu") {
+        this.webGPUSession = await runModelUtils.createModelWebGpu(this.modelFile);
+        this.session = this.webGPUSession;
       } else if (this.sessionBackend === "wasm") {
         this.cpuSession = await runModelUtils.createModelCpu(this.modelFile);
         this.session = this.cpuSession;
@@ -195,8 +208,9 @@ export default class DrawingModelUI extends Vue {
     } catch (e) {
       this.modelLoading = false;
       this.modelInitializing = false;
-      if (this.sessionBackend === "webgl") {
+      if (this.sessionBackend === "webgl" || this.sessionBackend === "webgpu") {
         this.gpuSession = undefined;
+        this.webGPUSession = undefined;
       } else {
         this.cpuSession = undefined;
       }
@@ -205,7 +219,7 @@ export default class DrawingModelUI extends Vue {
     this.modelLoading = false;
     // warm up session with a sample tensor. Use setTimeout(..., 0) to make it an async execution so
     // that UI update can be done.
-    if (this.sessionBackend === "webgl") {
+    if (this.sessionBackend === "webgl" || this.sessionBackend === "webgpu") {
       setTimeout(() => {
         runModelUtils.warmupModel(this.session!, [1, 1, 28, 28]);
         this.modelInitializing = false;
