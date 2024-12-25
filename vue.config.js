@@ -1,4 +1,5 @@
 const path = require("path");
+const fs = require("fs");
 
 module.exports = {
   css: {
@@ -73,5 +74,9 @@ module.exports = {
       path.join(__dirname, "path/to/onnxruntime-web/files"), // Adjust this path as needed
     ],
     host: "0.0.0.0",
+    https: {
+      key: fs.readFileSync(path.resolve(__dirname, "key.pem")),
+      cert: fs.readFileSync(path.resolve(__dirname, "cert.pem")),
+    },
   },
 };
