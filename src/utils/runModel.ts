@@ -10,7 +10,9 @@ export async function createModelCpu(model: ArrayBuffer): Promise<InferenceSessi
 }
 export async function createModelGpu(model: ArrayBuffer): Promise<InferenceSession> {
   init();
-  return await InferenceSession.create(model, {executionProviders: ['webgl']});
+  return await InferenceSession.create(model, {
+    executionProviders: ["webgpu"],
+  });
 }
 
 export async function warmupModel(model: InferenceSession, dims: number[]) {

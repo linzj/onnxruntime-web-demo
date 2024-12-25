@@ -12,12 +12,12 @@
   },
   "dependencies": {
     "@babel/polyfill": "^7.12.1",
+    "core-js": "^3.39.0",
     "ndarray": "^1.0.19",
     "ndarray-ops": "^1.2.2",
     "ndarray-resample": "^1.0.1",
     "ndarray-squeeze": "^1.0.2",
     "ndarray-unpack": "^1.0.0",
-    "onnxruntime-web": "1.8.0-dev.20210708.0",
     "vue": "^2.6.14",
     "vue-class-component": "^7.2.6",
     "vue-property-decorator": "^9.1.2",
@@ -25,6 +25,8 @@
     "whatwg-fetch": "^3.6.2"
   },
   "devDependencies": {
+    "@babel/plugin-proposal-optional-chaining": "^7.21.0",
+    "@babel/preset-env": "^7.26.0",
     "@types/lodash": "^4.14.172",
     "@types/long": "^4.0.1",
     "@types/ndarray": "^1.0.10",
@@ -39,6 +41,7 @@
     "css-loader": "^2.1.1",
     "electron": "^13.3.0",
     "electron-packager": "^15.4.0",
+    "onnxruntime-web": "^1.20.1",
     "postcss-cssnext": "^3.1.0",
     "postcss-import": "^12.0.1",
     "postcss-loader": "^3.0.0",
